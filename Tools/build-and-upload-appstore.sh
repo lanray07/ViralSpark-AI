@@ -20,6 +20,7 @@ mkdir -p build
 xcodebuild \
   -project ViralSparkAI.xcodeproj \
   -scheme ViralSparkAI \
+  -sdk iphoneos \
   -configuration Release \
   -destination "generic/platform=iOS" \
   -archivePath "$ARCHIVE_PATH" \
@@ -27,6 +28,9 @@ xcodebuild \
   -authenticationKeyID "$ASC_KEY_ID" \
   -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
   -authenticationKeyPath "$ASC_KEY_PATH" \
+  DEVELOPMENT_TEAM=5ZP6GV85J6 \
+  CODE_SIGN_STYLE=Automatic \
+  CODE_SIGN_IDENTITY="Apple Distribution" \
   archive
 
 xcodebuild \
