@@ -10,12 +10,46 @@ if [[ -z "${ASC_KEY_ID:-}" || -z "${ASC_ISSUER_ID:-}" || -z "${ASC_KEY_PATH:-}" 
   exit 1
 fi
 
+if [[ -z "${SIGNING_IDENTITY:-}" || -z "${PROFILE_SPECIFIER:-}" ]]; then
+  echo "Set SIGNING_IDENTITY and PROFILE_SPECIFIER for manual App Store signing."
+  echo "The GitHub Actions workflow installs these automatically from repository secrets."
+  exit 1
+fi
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ARCHIVE_PATH="$ROOT_DIR/build/ViralSparkAI.xcarchive"
-EXPORT_OPTIONS="$ROOT_DIR/Tools/ExportOptions-AppStore.plist"
+EXPORT_OPTIONS="$ROOT_DIR/build/ExportOptions-AppStore.plist"
 
 cd "$ROOT_DIR"
 mkdir -p build
+
+cat > "$EXPORT_OPTIONS" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>destination</key>
+	<string>upload</string>
+	<key>method</key>
+	<string>app-store-connect</string>
+	<key>provisioningProfiles</key>
+	<dict>
+		<key>com.viralsparkai.app</key>
+		<string>$PROFILE_SPECIFIER</string>
+	</dict>
+	<key>signingCertificate</key>
+	<string>$SIGNING_IDENTITY</string>
+	<key>signingStyle</key>
+	<string>manual</string>
+	<key>stripSwiftSymbols</key>
+	<true/>
+	<key>teamID</key>
+	<string>5ZP6GV85J6</string>
+	<key>uploadSymbols</key>
+	<true/>
+</dict>
+</plist>
+PLIST
 
 xcodebuild \
   -project ViralSparkAI.xcodeproj \
@@ -24,21 +58,16 @@ xcodebuild \
   -configuration Release \
   -destination "generic/platform=iOS" \
   -archivePath "$ARCHIVE_PATH" \
-  -allowProvisioningUpdates \
-  -authenticationKeyID "$ASC_KEY_ID" \
-  -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
-  -authenticationKeyPath "$ASC_KEY_PATH" \
   DEVELOPMENT_TEAM=5ZP6GV85J6 \
-  CODE_SIGN_STYLE=Automatic \
-  CODE_SIGNING_ALLOWED=NO \
-  CODE_SIGNING_REQUIRED=NO \
+  CODE_SIGN_STYLE=Manual \
+  CODE_SIGN_IDENTITY="$SIGNING_IDENTITY" \
+  PROVISIONING_PROFILE_SPECIFIER="$PROFILE_SPECIFIER" \
   archive
 
 xcodebuild \
   -exportArchive \
   -archivePath "$ARCHIVE_PATH" \
   -exportOptionsPlist "$EXPORT_OPTIONS" \
-  -allowProvisioningUpdates \
   -authenticationKeyID "$ASC_KEY_ID" \
   -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
   -authenticationKeyPath "$ASC_KEY_PATH"
