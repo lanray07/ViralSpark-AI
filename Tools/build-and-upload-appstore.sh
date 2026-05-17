@@ -30,7 +30,8 @@ xcodebuild \
   -authenticationKeyPath "$ASC_KEY_PATH" \
   DEVELOPMENT_TEAM=5ZP6GV85J6 \
   CODE_SIGN_STYLE=Automatic \
-  CODE_SIGN_IDENTITY="Apple Distribution" \
+  CODE_SIGNING_ALLOWED=NO \
+  CODE_SIGNING_REQUIRED=NO \
   archive
 
 xcodebuild \
