@@ -13,7 +13,7 @@ concurrency:
 jobs:
   upload:
     name: Archive and Upload
-    runs-on: macos-latest
+    runs-on: macos-26
     timeout-minutes: 60
 
     env:
@@ -43,8 +43,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+          XCODE_PATH="$(find /Applications -maxdepth 1 -type d -name 'Xcode_26*.app' ! -name '*beta*' -print | sort | tail -n 1)"
+          if [[ -z "$XCODE_PATH" ]]; then
+            XCODE_PATH="/Applications/Xcode.app"
+          fi
+          sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
+          echo "Selected Xcode at $XCODE_PATH"
           xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
 
       - name: Write App Store Connect API key
         shell: bash
